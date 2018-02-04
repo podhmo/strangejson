@@ -49,7 +49,8 @@ func run(opt *opt) error {
 
 	for _, pkgpath := range pkgpaths {
 		info := prog.Package(pkgpath)
-		schemas, err := strangejson.ParsePackage(info.Pkg)
+		findDescription := true
+		schemas, err := strangejson.ParsePackageInfo(info, findDescription)
 		if err != nil {
 			return err
 		}
