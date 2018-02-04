@@ -31,18 +31,18 @@ const (
 
 // Schema :
 type Schema struct {
-	Name        string     `json:"name"`
-	Description string     `json:"description,omitempty"`
-	Type        Type       `json:"type"`
-	Properties  []Property `json:"properties,omitempty"`
-	Required    []string   `json:"required,omitempty"`
+	Name        string           `json:"name"`
+	Description string           `json:"description,omitempty"`
+	Type        Type             `json:"type"`
+	Properties  []SchemaProperty `json:"properties,omitempty"`
+	Required    []string         `json:"required,omitempty"`
 
 	XGoName string   `json:"x-goname"`
 	Depends []Schema `json:"-"`
 }
 
-// Property :
-type Property struct {
+// SchemaProperty :
+type SchemaProperty struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 	Type        Type   `json:"type"`
@@ -132,7 +132,7 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]Schema,
 		s := Schema{
 			Name:       name,
 			Type:       TypeObject,
-			Properties: []Property{},
+			Properties: []SchemaProperty{},
 			Required:   []string{},
 			XGoName:    name,
 		}
@@ -166,7 +166,7 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]Schema,
 				required = true
 			}
 
-			prop := Property{
+			prop := SchemaProperty{
 				Name:     fieldname,
 				Type:     ParseType(field),
 				Required: required,
