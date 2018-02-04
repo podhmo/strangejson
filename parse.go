@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/k0kubun/pp"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/loader"
 )
@@ -100,7 +99,6 @@ func FindDocStringByPos(files []*ast.File, pos token.Pos) *ast.CommentGroup {
 			}
 			return x.Comment
 		case *ast.TypeSpec:
-			pp.Println(x)
 			if x.Doc != nil {
 				return x.Doc
 			}
