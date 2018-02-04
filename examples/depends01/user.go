@@ -2,7 +2,7 @@ package depends
 
 import "time"
 
-// BloodType :
+// BloodType : type of blood
 type BloodType string
 
 const (
