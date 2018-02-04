@@ -1,0 +1,9 @@
+// todo: interface
+// todo: inline
+// todo: json:"-"
+// todo: external import
+
+- depends
+  - x-gotype
+  - id
+- constant(enum)
