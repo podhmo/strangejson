@@ -37,8 +37,10 @@ type Schema struct {
 	Properties  []SchemaProperty `json:"properties,omitempty"`
 	Required    []string         `json:"required,omitempty"`
 
-	XGoName string   `json:"x-goname"`
-	Depends []Schema `json:"-"`
+	XGoName string `json:"x-goname"`
+	XGoType string `json:"x-gotype"`
+
+	Pos token.Pos `json:"-"` // id
 }
 
 // SchemaProperty :
@@ -47,7 +49,11 @@ type SchemaProperty struct {
 	Description string `json:"description,omitempty"`
 	Type        Type   `json:"type"`
 	Required    bool   `json:"required"`
-	XGoName     string `json:"x-goname"`
+
+	XGoName string `json:"x-goname"`
+	XGoType string `json:"x-gotype"`
+
+	Depends []token.Pos `json:"-"`
 }
 
 // FindFileByPos :
@@ -120,75 +126,86 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]Schema,
 	})
 	scope := info.Pkg.Scope()
 
-	// todo: parse depends
+	// todo: parse dependencies
 
 	var r []Schema
 	for _, name := range scope.Names() {
 		ob := scope.Lookup(name)
-		internal, ok := ob.Type().Underlying().(*types.Struct)
-		if !ok {
+		switch ob.Type().Underlying().(type) {
+		case *types.Struct:
+			r = append(r, ParseStruct(info, ob, findDescription))
+		}
+
+	}
+	return r, nil
+}
+
+// ParseStruct :
+func ParseStruct(info *loader.PackageInfo, ob types.Object, findDescription bool) Schema {
+	name := ob.Name()
+	internal := ob.Type().Underlying().(*types.Struct) // xxx
+
+	s := Schema{
+		Name:       name,
+		Type:       TypeObject,
+		Properties: []SchemaProperty{},
+		Required:   []string{},
+		XGoName:    name,
+		XGoType:    ob.Type().String(),
+		Pos:        ob.Pos(),
+	}
+
+	if findDescription {
+		description := FindDocStringByPos(info.Files, ob.Pos()-1)
+		if description != nil {
+			s.Description = strings.Trim(strings.TrimPrefix(description.Text(), s.XGoName), " :\n")
+		}
+	}
+
+	for i := 0; i < internal.NumFields(); i++ {
+		field := internal.Field(i)
+		if !field.Exported() {
 			continue
 		}
-		s := Schema{
-			Name:       name,
-			Type:       TypeObject,
-			Properties: []SchemaProperty{},
-			Required:   []string{},
-			XGoName:    name,
+
+		tag := reflect.StructTag(internal.Tag(i))
+		// todo: omitempty
+		fieldname, ok := tag.Lookup("json")
+		if !ok {
+			fieldname = field.Name()
+		}
+
+		requiredStr, ok := tag.Lookup("required")
+		if !ok {
+			requiredStr = "true"
+		}
+		required, err := strconv.ParseBool(requiredStr)
+		if err != nil {
+			required = true
+		}
+
+		prop := SchemaProperty{
+			Name:     fieldname,
+			Type:     ParseType(field),
+			Required: required,
+			XGoName:  field.Name(),
+			XGoType:  field.Type().String(),
 		}
 
 		if findDescription {
-			description := FindDocStringByPos(info.Files, ob.Pos()-1)
+			description := FindDocStringByPos(info.Files, field.Pos())
 			if description != nil {
-				s.Description = strings.Trim(strings.TrimPrefix(description.Text(), s.XGoName), " :\n")
+				prop.Description = strings.Trim(strings.TrimPrefix(description.Text(), prop.XGoName), " :\n")
 			}
 		}
-
-		for i := 0; i < internal.NumFields(); i++ {
-			field := internal.Field(i)
-			if !field.Exported() {
-				continue
-			}
-
-			tag := reflect.StructTag(internal.Tag(i))
-			// todo: omitempty
-			fieldname, ok := tag.Lookup("json")
-			if !ok {
-				fieldname = field.Name()
-			}
-
-			requiredStr, ok := tag.Lookup("required")
-			if !ok {
-				requiredStr = "true"
-			}
-			required, err := strconv.ParseBool(requiredStr)
-			if err != nil {
-				required = true
-			}
-
-			prop := SchemaProperty{
-				Name:     fieldname,
-				Type:     ParseType(field),
-				Required: required,
-				XGoName:  field.Name(),
-			}
-
-			// if findDescription {
-			// 	description := FindDocStringByPos(info.Files, field.Pos())
-			// 	if description != nil {
-			// 		prop.Description = strings.Trim(strings.TrimPrefix(description.Text(), prop.XGoName), " :\n")
-			// 	}
-			// }
-			s.Properties = append(s.Properties, prop)
-		}
-		for _, prop := range s.Properties {
-			if prop.Required {
-				s.Required = append(s.Required, prop.Name)
-			}
-		}
-		r = append(r, s)
+		s.Properties = append(s.Properties, prop)
 	}
-	return r, nil
+	for _, prop := range s.Properties {
+		if prop.Required {
+			s.Required = append(s.Required, prop.Name)
+		}
+	}
+	return s
 }
 
 // ParseType :
