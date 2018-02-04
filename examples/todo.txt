@@ -7,3 +7,4 @@
   - x-gotype
   - id
 - constant(enum)
+- skip unexported symbol
