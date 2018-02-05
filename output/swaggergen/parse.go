@@ -1,7 +1,6 @@
-package strangejson
+package swaggergen
 
 import (
-	"go/ast"
 	"go/token"
 	"go/types"
 	"log"
@@ -10,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/tools/go/ast/astutil"
+	"github.com/podhmo/strangejson/astutil"
 	"golang.org/x/tools/go/loader"
 )
 
@@ -67,69 +66,6 @@ type SchemaProperty struct {
 	Depends []token.Pos `json:"-"`
 }
 
-// FindFileByPos :
-func FindFileByPos(files []*ast.File, pos token.Pos) *ast.File {
-	var found *ast.File
-	for _, f := range files {
-		if pos >= f.Pos() {
-			found = f
-		} else {
-			return found
-		}
-	}
-	return found
-}
-
-// FindDocStringByPos :
-func FindDocStringByPos(files []*ast.File, pos token.Pos) *ast.CommentGroup {
-	file := FindFileByPos(files, pos)
-	if file == nil {
-		return nil
-	}
-
-	nodes, _ := astutil.PathEnclosingInterval(file, pos, pos)
-	if len(nodes) <= 0 {
-		return nil
-	}
-
-	switch t := nodes[0].(type) {
-	case *ast.GenDecl:
-		return t.Doc
-	case *ast.Ident:
-		if t.Obj == nil {
-			return nil
-		}
-		switch x := t.Obj.Decl.(type) {
-		case *ast.Field:
-			if x.Doc != nil {
-				return x.Doc
-			}
-			return x.Comment
-		case *ast.ImportSpec:
-			if x.Doc != nil {
-				return x.Doc
-			}
-			return x.Comment
-		case *ast.ValueSpec:
-			if x.Doc != nil {
-				return x.Doc
-			}
-			return x.Comment
-		case *ast.TypeSpec:
-			if x.Doc != nil {
-				return x.Doc
-			}
-			return x.Comment
-		default:
-			log.Printf("default2: %#v\n", x)
-			return nil
-		}
-	default:
-		log.Printf("default: %#v\n", t)
-		return nil
-	}
-}
-
 // ParsePackageInfo :
 func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]*Schema, error) {
 	sort.SliceStable(info.Files, func(i int, j int) bool {
@@ -169,7 +105,7 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]*Schema
 				}
 
 				if findDescription {
-					description := FindDocStringByPos(info.Files, ob.Pos())
+					description := astutil.FindDocStringByPos(info.Files, ob.Pos())
 					if description != nil {
 						s.Description = strings.Trim(strings.TrimPrefix(description.Text(), ob.Name()), " :\n")
 					}
@@ -187,7 +123,7 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]*Schema
 					Pos:     ob.Pos(),
 				}
 				if findDescription {
-					description := FindDocStringByPos(info.Files, ob.Pos())
+					description := astutil.FindDocStringByPos(info.Files, ob.Pos())
 					if description != nil {
 						enum.Description = strings.Trim(strings.TrimPrefix(description.Text(), ob.Name()), " :\n")
 					}
@@ -224,7 +160,7 @@ func ParseStruct(info *loader.PackageInfo, ob types.Object, findDescription bool
 	}
 
 	if findDescription {
-		description := FindDocStringByPos(info.Files, ob.Pos()-1)
+		description := astutil.FindDocStringByPos(info.Files, ob.Pos()-1)
 		if description != nil {
 			s.Description = strings.Trim(strings.TrimPrefix(description.Text(), s.XGoName), " :\n")
 		}
@@ -261,7 +197,7 @@ func ParseStruct(info *loader.PackageInfo, ob types.Object, findDescription bool
 		}
 
 		if findDescription {
-			description := FindDocStringByPos(info.Files, field.Pos())
+			description := astutil.FindDocStringByPos(info.Files, field.Pos())
 			if description != nil {
 				prop.Description = strings.Trim(strings.TrimPrefix(description.Text(), prop.XGoName), " :\n")
 			}

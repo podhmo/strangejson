@@ -2,15 +2,11 @@ package main
 
 import (
 	"fmt"
-	"go/build"
-	"go/parser"
 	"log"
 	"os"
 
-	"github.com/k0kubun/pp"
 	"github.com/podhmo/strangejson"
-	"github.com/podhmo/strangejson/finding"
-	"golang.org/x/tools/go/loader"
+	"github.com/podhmo/strangejson/output/swaggergen"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -33,28 +29,12 @@ func main() {
 }
 
 func run(opt *opt) error {
-	ctxt := build.Default
-
-	conf := &loader.Config{
-		Build:       &ctxt,
-		ParserMode:  parser.ParseComments,
-		AllowErrors: false, // xxx
-	}
-
-	pkgpaths := finding.ImportPkg(conf, opt.Pkg)
+	conf := strangejson.NewConfig()
+	pkgpaths := strangejson.ImportPkg(conf, opt.Pkg)
 	prog, err := conf.Load()
 	if err != nil {
 		return err
 	}
-
-	for _, pkgpath := range pkgpaths {
-		info := prog.Package(pkgpath)
-		findDescription := true
-		schemas, err := strangejson.ParsePackageInfo(info, findDescription)
-		if err != nil {
-			return err
-		}
-		pp.Println(schemas)
-	}
-	return nil
+	cmd := swaggergen.New(prog)
+	return cmd.Run(pkgpaths)
 }

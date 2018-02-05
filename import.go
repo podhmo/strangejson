@@ -1,12 +1,25 @@
-package finding
+package strangejson
 
 import (
+	"go/build"
+	"go/parser"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 
 	"golang.org/x/tools/go/loader"
 )
+
+// NewConfig :
+func NewConfig() *loader.Config {
+	ctxt := build.Default
+	conf := &loader.Config{
+		Build:       &ctxt,
+		ParserMode:  parser.ParseComments,
+		AllowErrors: false, // xxx
+	}
+	return conf
+}
 
 // ImportPkg :
 func ImportPkg(conf *loader.Config, pkgpath string) []string {
