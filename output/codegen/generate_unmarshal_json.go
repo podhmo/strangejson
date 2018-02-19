@@ -32,12 +32,6 @@ func GenerateUnmarshalJSON(pkg *types.Package) ([]Gen, error) {
 }
 
 func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *accessor.StructAccessor, qf types.Qualifier) error {
-	unmarshalJSON := sa.LookupFieldOrMethod("UnmarshalJSON")
-	if unmarshalJSON != nil {
-		// TODO: update?
-		return nil
-	}
-
 	ob := sa.Object
 	typename := ob.Name()
 	fmt.Fprintf(w, "// UnmarshalJSON : (generated from %s)\n", ob.Type().String())
@@ -46,6 +40,9 @@ func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *a
 	// internal struct, all fields are pointer
 	fmt.Fprintf(w, "	type internal struct {\n")
 	sa.IterateFields(func(fa *accessor.FieldAccessor) error {
+		if !fa.Exported() {
+			return nil
+		}
 		typ := types.TypeString(types.NewPointer(fa.Object.Type()), qf)
 		switch fa.Tag {
 		case "":
@@ -66,6 +63,9 @@ func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *a
 
 	// todo: use multierror
 	sa.IterateFields(func(fa *accessor.FieldAccessor) error {
+		if !fa.Exported() {
+			return nil
+		}
 		switch fa.IsRequired() {
 		case true:
 			fmt.Fprintf(w, "	if p.%s == nil {\n", fa.Name())
