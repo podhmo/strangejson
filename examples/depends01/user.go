@@ -24,5 +24,5 @@ type User struct {
 	NickName  string    `json:"nickname" required:"false"`
 	Birth     time.Time `json:"birth" required:"false"`
 	BloodType BloodType `json:"bloodtype"`
-	Skills    []Skill   `json:"skill"`
+	Skills    []Skill   `json:"skills"`
 }

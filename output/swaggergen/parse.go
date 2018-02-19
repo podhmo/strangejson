@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/podhmo/strangejson/astutil"
+	"github.com/podhmo/astknife/bypos"
 	"golang.org/x/tools/go/loader"
 )
 
@@ -105,7 +105,7 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]*Schema
 				}
 
 				if findDescription {
-					description := astutil.FindDocStringByPos(info.Files, ob.Pos())
+					description := bypos.FindComments(info.Files, ob.Pos())
 					if description != nil {
 						s.Description = strings.Trim(strings.TrimPrefix(description.Text(), ob.Name()), " :\n")
 					}
@@ -123,7 +123,7 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]*Schema
 					Pos:     ob.Pos(),
 				}
 				if findDescription {
-					description := astutil.FindDocStringByPos(info.Files, ob.Pos())
+					description := bypos.FindComments(info.Files, ob.Pos())
 					if description != nil {
 						enum.Description = strings.Trim(strings.TrimPrefix(description.Text(), ob.Name()), " :\n")
 					}
@@ -160,7 +160,7 @@ func ParseStruct(info *loader.PackageInfo, ob types.Object, findDescription bool
 	}
 
 	if findDescription {
-		description := astutil.FindDocStringByPos(info.Files, ob.Pos()-1)
+		description := bypos.FindComments(info.Files, ob.Pos()-1)
 		if description != nil {
 			s.Description = strings.Trim(strings.TrimPrefix(description.Text(), s.XGoName), " :\n")
 		}
@@ -197,7 +197,7 @@ func ParseStruct(info *loader.PackageInfo, ob types.Object, findDescription bool
 		}
 
 		if findDescription {
-			description := astutil.FindDocStringByPos(info.Files, field.Pos())
+			description := bypos.FindComments(info.Files, field.Pos())
 			if description != nil {
 				prop.Description = strings.Trim(strings.TrimPrefix(description.Text(), prop.XGoName), " :\n")
 			}

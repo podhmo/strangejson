@@ -6,7 +6,8 @@ import (
 	"os"
 
 	"github.com/podhmo/strangejson"
-	"github.com/podhmo/strangejson/output/swaggergen"
+	"github.com/podhmo/strangejson/buildcontext"
+	"github.com/podhmo/strangejson/output/codegen"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -29,12 +30,14 @@ func main() {
 }
 
 func run(opt *opt) error {
-	conf := strangejson.NewConfig()
-	pkgpaths := strangejson.ImportPkg(conf, opt.Pkg)
+	build := buildcontext.Default()
+	conf := strangejson.NewConfig(strangejson.WithBuildContext(build.Context))
+	pkgpaths := conf.ImportPkg(opt.Pkg)
 	prog, err := conf.Load()
 	if err != nil {
 		return err
 	}
-	cmd := swaggergen.New(prog)
+	// cmd := swaggergen.New(prog)
+	cmd := codegen.New(build, prog)
 	return cmd.Run(pkgpaths)
 }

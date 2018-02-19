@@ -2,17 +2,19 @@ package swaggergen
 
 import (
 	"github.com/k0kubun/pp"
+	"github.com/podhmo/strangejson/buildcontext"
 	"github.com/podhmo/strangejson/output"
 	"golang.org/x/tools/go/loader"
 )
 
 type command struct {
+	Build   *buildcontext.Context
 	Program *loader.Program
 }
 
 // New :
-func New(program *loader.Program) output.Command {
-	return &command{Program: program}
+func New(build *buildcontext.Context, program *loader.Program) output.Command {
+	return &command{Build: build, Program: program}
 }
 
 // run :

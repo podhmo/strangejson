@@ -8,3 +8,9 @@
   - id
 - constant(enum)
 - skip unexported symbol
+
+hmm
+----------------------------------------
+
+- iterate struct
+- split type name
