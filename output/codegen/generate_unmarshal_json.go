@@ -46,16 +46,13 @@ func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *a
 	// internal struct, all fields are pointer
 	fmt.Fprintf(w, "	type internal struct {\n")
 	sa.IterateFields(func(fa *accessor.FieldAccessor) error {
-		if !fa.IsRequired() {
-			return nil
-		}
 		typ := types.TypeString(types.NewPointer(fa.Object.Type()), qf)
-		if fa.Tag == "" {
+		switch fa.Tag {
+		case "":
 			fmt.Fprintf(w, "		%s %s\n", fa.Name(), typ)
-		} else {
+		default:
 			fmt.Fprintf(w, "		%s %s `%s`\n", fa.Name(), typ, fa.Tag)
 		}
-
 		return nil
 	})
 	fmt.Fprintln(w, "	}")
@@ -69,14 +66,17 @@ func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *a
 
 	// todo: use multierror
 	sa.IterateFields(func(fa *accessor.FieldAccessor) error {
-		if !fa.IsRequired() {
-			return nil
+		switch fa.IsRequired() {
+		case true:
+			fmt.Fprintf(w, "	if p.%s == nil {\n", fa.Name())
+			fmt.Fprintf(w, "		return errors.New(\"%s is required\")\n", fa.GuessJSONFieldName(fa.Name()))
+			fmt.Fprintf(w, "	}\n")
+			fmt.Fprintf(w, "	x.%s = *p.%s\n", fa.Name(), fa.Name())
+		case false:
+			fmt.Fprintf(w, "	if p.%s != nil {\n", fa.Name())
+			fmt.Fprintf(w, "		x.%s = *p.%s\n", fa.Name(), fa.Name())
+			fmt.Fprintf(w, "	}\n")
 		}
-
-		fmt.Fprintf(w, "	if p.%s == nil {\n", fa.Name())
-		fmt.Fprintf(w, "		return errors.New(\"%s is required\")\n", fa.GuessJSONFieldName(fa.Name()))
-		fmt.Fprintf(w, "	}\n")
-		fmt.Fprintf(w, "	x.%s = *p.%s\n", fa.Name(), fa.Name())
 		return nil
 	})
 	fmt.Fprintln(w, "")
