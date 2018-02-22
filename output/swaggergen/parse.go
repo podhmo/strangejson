@@ -5,7 +5,6 @@ import (
 	"go/types"
 	"log"
 	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -68,9 +67,7 @@ type SchemaProperty struct {
 
 // ParsePackageInfo :
 func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]*Schema, error) {
-	sort.SliceStable(info.Files, func(i int, j int) bool {
-		return info.Files[i].Pos() <= info.Files[j].Pos()
-	})
+	sorted := bypos.SortFiles(info.Files)
 	scope := info.Pkg.Scope()
 	typeNameMap := map[string]*Schema{}
 
@@ -81,7 +78,7 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]*Schema
 		ob := scope.Lookup(name)
 		switch ob.Type().Underlying().(type) {
 		case *types.Struct:
-			r = append(r, ParseStruct(info, ob, findDescription))
+			r = append(r, ParseStruct(info, sorted, ob, findDescription))
 		case *types.Slice:
 			//
 		case *types.Map:
@@ -105,7 +102,7 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]*Schema
 				}
 
 				if findDescription {
-					description := bypos.FindComments(info.Files, ob.Pos())
+					description := bypos.FindComments(sorted, ob.Pos())
 					if description != nil {
 						s.Description = strings.Trim(strings.TrimPrefix(description.Text(), ob.Name()), " :\n")
 					}
@@ -123,7 +120,7 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]*Schema
 					Pos:     ob.Pos(),
 				}
 				if findDescription {
-					description := bypos.FindComments(info.Files, ob.Pos())
+					description := bypos.FindComments(sorted, ob.Pos())
 					if description != nil {
 						enum.Description = strings.Trim(strings.TrimPrefix(description.Text(), ob.Name()), " :\n")
 					}
@@ -145,7 +142,7 @@ func ParsePackageInfo(info *loader.PackageInfo, findDescription bool) ([]*Schema
 }
 
 // ParseStruct :
-func ParseStruct(info *loader.PackageInfo, ob types.Object, findDescription bool) *Schema {
+func ParseStruct(info *loader.PackageInfo, sorted bypos.Sorted, ob types.Object, findDescription bool) *Schema {
 	name := ob.Name()
 	internal := ob.Type().Underlying().(*types.Struct) // xxx
 
@@ -160,7 +157,7 @@ func ParseStruct(info *loader.PackageInfo, ob types.Object, findDescription bool
 	}
 
 	if findDescription {
-		description := bypos.FindComments(info.Files, ob.Pos()-1)
+		description := bypos.FindComments(sorted, ob.Pos()-1)
 		if description != nil {
 			s.Description = strings.Trim(strings.TrimPrefix(description.Text(), s.XGoName), " :\n")
 		}
@@ -197,7 +194,7 @@ func ParseStruct(info *loader.PackageInfo, ob types.Object, findDescription bool
 		}
 
 		if findDescription {
-			description := bypos.FindComments(info.Files, field.Pos())
+			description := bypos.FindComments(sorted, field.Pos())
 			if description != nil {
 				prop.Description = strings.Trim(strings.TrimPrefix(description.Text(), prop.XGoName), " :\n")
 			}

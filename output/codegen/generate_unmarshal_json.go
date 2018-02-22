@@ -5,12 +5,14 @@ import (
 	"go/ast"
 	"go/types"
 	"io"
+	"sort"
 
+	"github.com/podhmo/astknife/bypos"
 	"github.com/podhmo/strangejson/output/codegen/accessor"
 )
 
 // GenerateUnmarshalJSON :
-func GenerateUnmarshalJSON(pkg *types.Package) ([]Gen, error) {
+func GenerateUnmarshalJSON(pkg *types.Package, sorted bypos.Sorted, arrived map[*types.Struct]types.Object) ([]Gen, error) {
 	a := &accessor.Accessor{Pkg: pkg}
 	var results []Gen
 
@@ -18,24 +20,39 @@ func GenerateUnmarshalJSON(pkg *types.Package) ([]Gen, error) {
 		if !sa.Exported() {
 			return nil
 		}
+
+		sameOb, ok := arrived[sa.Underlying]
+		if !ok {
+			arrived[sa.Underlying] = sa.Object
+		}
 		results = append(results, Gen{
-			Name:   "UnmarshalJSON",
+			Name:   fmt.Sprintf("%s.UnmarshalJSON", sa.Name()),
 			Object: sa.Object,
+			File:   bypos.FindFile(sorted, sa.Object.Pos()),
 			Generate: func(w io.Writer, f *ast.File) error {
 				qf := NameTo(pkg, f)
-				return generateUnmarshalJSON(w, f, a, sa, qf)
+				return generateUnmarshalJSON(w, f, a, sa, qf, sameOb)
 			},
 		})
 		return nil
 	})
+
+	sort.Slice(results, func(i, j int) bool { return results[i].Name < results[j].Name })
+
 	return results, err
 }
 
-func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *accessor.StructAccessor, qf types.Qualifier) error {
+func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *accessor.StructAccessor, qf types.Qualifier, sameOb types.Object) error {
 	ob := sa.Object
-	typename := ob.Name()
+
 	fmt.Fprintf(w, "// UnmarshalJSON : (generated from %s)\n", ob.Type().String())
-	fmt.Fprintf(w, "func (x %s) UnmarshalJSON(b []byte) error {\n", typename)
+	fmt.Fprintf(w, "func (x %s) UnmarshalJSON(b []byte) error {\n", types.TypeString(types.NewPointer(ob.Type()), qf))
+	defer fmt.Fprintln(w, "}")
+
+	if sameOb != nil {
+		fmt.Fprintf(w, "	return (%s)(x).UnmarshalJSON(b)\n", types.TypeString(types.NewPointer(sameOb.Type()), qf))
+		return nil
+	}
 
 	// internal struct, all fields are pointer
 	fmt.Fprintf(w, "	type internal struct {\n")
@@ -79,9 +96,7 @@ func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *a
 		}
 		return nil
 	})
-	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "	return nil")
-	fmt.Fprintln(w, "}")
 	return nil
 }
 

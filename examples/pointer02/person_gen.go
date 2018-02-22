@@ -6,7 +6,7 @@ import (
 )
 
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/pointer02.Person)
-func (x Person) UnmarshalJSON(b []byte) error {
+func (x *Person) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Name   *string  `json:"name"`
 		Age    *int     `json:"age"`
@@ -33,6 +33,5 @@ func (x Person) UnmarshalJSON(b []byte) error {
 	if p.Mother != nil {
 		x.Mother = *p.Mother
 	}
-
 	return nil
 }

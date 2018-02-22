@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/types"
 	"io"
 	"log"
 	"strings"
 
-	"go/printer"
-
+	"github.com/podhmo/astknife/action"
 	"github.com/podhmo/astknife/bypos"
+	"github.com/podhmo/astknife/lookup"
 	"github.com/podhmo/strangejson/buildcontext"
 	"github.com/podhmo/strangejson/output"
+	"github.com/podhmo/strangejson/output/codegen/fileinfo"
 	"golang.org/x/tools/go/loader"
 	"golang.org/x/tools/imports"
 )
@@ -31,66 +33,83 @@ func New(build *buildcontext.Context, program *loader.Program) output.Command {
 
 // run :
 func (cmd *command) Run(pkgpaths []string) error {
+	cache := &cache{
+		unmarshalStructCache: map[*types.Struct]types.Object{},
+	}
+
 	for _, pkgpath := range pkgpaths {
 		info := cmd.Program.Package(pkgpath)
 		fset := cmd.Program.Fset
 		sorted := bypos.SortFiles(info.Files)
+		lookup := lookup.New(sorted.Files...)
 
-		gens, err := GenerateUnmarshalJSON(info.Pkg)
+		gens, err := GenerateUnmarshalJSON(info.Pkg, sorted, cache.unmarshalStructCache)
 		if err != nil {
 			return err
 		}
 
-		filenameMap := make(map[*ast.File]string, len(info.Files))
-		fileMap := map[string]*ast.File{}
-		for _, f := range info.Files {
-			filename := fset.Position(f.Pos()).Filename
-			filenameMap[f] = filename
-			fileMap[filename] = f
-		}
-
+		r := fileinfo.NewRepository(fset, info.Pkg, info.Files)
 		aggregated := map[*ast.File][]Gen{}
 		for _, gen := range gens {
 			log.Printf("for %s.%s\n", gen.Object.Type().String(), gen.Name)
-			srcfile := bypos.FindFile(sorted, gen.Object.Pos())
-			srcfilename := filenameMap[srcfile]
+			srcfile := gen.File
+			srcfilename, _ := r.NameOf(srcfile)
 
 			dstfilename := strings.Replace(strings.Replace(srcfilename, ".go", "_gen.go", 1), "_gen_gen.go", "_gen.go", 1)
-			dstfile, ok := fileMap[dstfilename]
+			dstfile, ok := r.FileOf(dstfilename)
 
 			if !ok {
-				code := fmt.Sprintf("package %s", info.Pkg.Name())
-				dstfile, err = parser.ParseFile(fset, dstfilename, code, parser.ParseComments)
-				if err != nil {
-					return err
-				}
-				fileMap[dstfilename] = dstfile
-				filenameMap[dstfile] = dstfilename
+				dstfile = r.CreateFakeFile(dstfilename)
+				r.AddFile(dstfilename, dstfile)
 			}
 			aggregated[dstfile] = append(aggregated[dstfile], gen)
 		}
 
 		for f, gens := range aggregated {
-			filename := filenameMap[f]
+			filename, _ := r.NameOf(f)
 			log.Printf("write %s\n", filename)
 
-			// todo: string -> ast. sync ast.
-			var b bytes.Buffer
-			if err := printer.Fprint(&b, fset, f); err != nil {
-				return err
-			}
+			var newCodeBuf bytes.Buffer
+			io.WriteString(&newCodeBuf, fmt.Sprintf("package %s\n", info.Pkg.Name()))
 			for _, gen := range gens {
-				if err := gen.Generate(&b, f); err != nil {
+				if err := gen.Generate(&newCodeBuf, f); err != nil {
 					return err
 				}
 			}
 
-			output, err := imports.Process(filename, b.Bytes(), nil)
-			if err != nil {
-				return err
-			}
+			switch r.IsNew(f) {
+			case true:
+				output, err := imports.Process(filename, newCodeBuf.Bytes(), nil)
+				if err != nil {
+					return err
+				}
+				buildcontext.WriteFile(cmd.Build, filename, output, 0644)
+			default:
+				newf, err := parser.ParseFile(fset, filename, newCodeBuf.Bytes(), parser.ParseComments)
+				if err != nil {
+					return err
+				}
 
-			buildcontext.WriteFile(cmd.Build, filename, output, 0644)
+				for _, gen := range gens {
+					replacement := lookup.With(newf).Lookup(gen.Name) // xxx
+					if _, err := action.AppendOrReplace(lookup, f, replacement); err != nil {
+						if !action.IsNoEffect(err) {
+							return err
+						}
+					}
+				}
+
+				var b bytes.Buffer
+				if err := printer.Fprint(&b, fset, f); err != nil {
+					return err
+				}
+
+				output, err := imports.Process(filename, b.Bytes(), nil)
+				if err != nil {
+					return err
+				}
+				buildcontext.WriteFile(cmd.Build, filename, output, 0644)
+			}
 		}
 	}
 	return nil
@@ -100,5 +119,6 @@ func (cmd *command) Run(pkgpaths []string) error {
 type Gen struct {
 	Name     string
 	Object   types.Object
+	File     *ast.File
 	Generate func(w io.Writer, f *ast.File) error // xxx tentative
 }
