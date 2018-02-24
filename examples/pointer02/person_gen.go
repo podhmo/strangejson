@@ -11,20 +11,10 @@ func (x *Person) FormatCheck() error {
 		if err := x.Father.FormatCheck(); err != nil {
 			return err
 		}
-		for _, sub := range x.Father {
-			if err := sub.FormatCheck(); err != nil {
-				return err
-			}
-		}
 	}
 	if x.Mother != nil {
 		if err := x.Mother.FormatCheck(); err != nil {
 			return err
-		}
-		for _, sub := range x.Mother {
-			if err := sub.FormatCheck(); err != nil {
-				return err
-			}
 		}
 	}
 	return nil

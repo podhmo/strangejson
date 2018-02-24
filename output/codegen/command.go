@@ -88,7 +88,7 @@ func (cmd *command) Run(pkgpaths []string) error {
 
 		aggregated := map[*ast.File][]output.Gen{}
 		for _, gen := range gens {
-			log.Printf("for %s.%s\n", gen.Object.Type().String(), gen.Name)
+			log.Printf("generate %s (for %s)\n", gen.Name, gen.Object.Type().String())
 			srcfile := gen.File
 			srcfilename, _ := r.NameOf(srcfile)
 
