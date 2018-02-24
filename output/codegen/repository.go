@@ -1,4 +1,4 @@
-package fileinfo
+package codegen
 
 import (
 	"go/ast"

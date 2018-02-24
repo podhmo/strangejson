@@ -5,6 +5,11 @@ import (
 	"errors"
 )
 
+// FormatCheck : (generated from github.com/podhmo/strangejson/examples/simple00.User)
+func (x *User) FormatCheck() error {
+	return nil
+}
+
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/simple00.User)
 func (x *User) UnmarshalJSON(b []byte) error {
 	type internal struct {
@@ -29,5 +34,5 @@ func (x *User) UnmarshalJSON(b []byte) error {
 	if p.NickName != nil {
 		x.NickName = *p.NickName
 	}
-	return nil
+	return x.FormatCheck()
 }

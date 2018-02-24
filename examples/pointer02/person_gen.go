@@ -5,6 +5,31 @@ import (
 	"errors"
 )
 
+// FormatCheck : (generated from github.com/podhmo/strangejson/examples/pointer02.Person)
+func (x *Person) FormatCheck() error {
+	if x.Father != nil {
+		if err := x.Father.FormatCheck(); err != nil {
+			return err
+		}
+		for _, sub := range x.Father {
+			if err := sub.FormatCheck(); err != nil {
+				return err
+			}
+		}
+	}
+	if x.Mother != nil {
+		if err := x.Mother.FormatCheck(); err != nil {
+			return err
+		}
+		for _, sub := range x.Mother {
+			if err := sub.FormatCheck(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/pointer02.Person)
 func (x *Person) UnmarshalJSON(b []byte) error {
 	type internal struct {
@@ -33,5 +58,5 @@ func (x *Person) UnmarshalJSON(b []byte) error {
 	if p.Mother != nil {
 		x.Mother = *p.Mother
 	}
-	return nil
+	return x.FormatCheck()
 }

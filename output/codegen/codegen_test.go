@@ -10,6 +10,14 @@ import (
 
 func TestCodegen(t *testing.T) {
 	pkgs := map[string]map[string]string{
+		"github.com/podhmo/strangejson/formatcheck": {
+			"formatcheck.go": `
+package formatcheck
+type FormatCheckable interface {
+	FormatCheck() error
+}
+`,
+		},
 		"github.com/podhmo/sandbox/model": {
 			"person.go": `
 package model
@@ -23,6 +31,7 @@ type Person struct {
 	build := buildcontext.FakeContext(pkgs)
 	conf := strangejson.NewConfig(strangejson.WithBuildContext(build.Context))
 
+	conf.ImportPkg("github.com/podhmo/strangejson/formatcheck")
 	pkgpaths := conf.ImportPkg("github.com/podhmo/sandbox/model")
 	prog, err := conf.Load()
 

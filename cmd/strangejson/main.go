@@ -5,13 +5,13 @@ import (
 	"go/build"
 	"log"
 	"os"
-	"strings"
-
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/podhmo/strangejson"
 	"github.com/podhmo/strangejson/buildcontext"
+	_ "github.com/podhmo/strangejson/formatcheck"
 	"github.com/podhmo/strangejson/output/codegen"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -64,7 +64,10 @@ func main() {
 func run(opt *opt) error {
 	build := buildcontext.Default()
 	conf := strangejson.NewConfig(strangejson.WithBuildContext(build.Context))
+
+	conf.ImportPkg("github.com/podhmo/strangejson/formatcheck")
 	pkgpaths := conf.ImportPkg(opt.Pkg)
+
 	prog, err := conf.Load()
 	if err != nil {
 		return err

@@ -5,6 +5,11 @@ import (
 	"errors"
 )
 
+// FormatCheck : (generated from github.com/podhmo/strangejson/examples/manypackages04/item.Item)
+func (x *Item) FormatCheck() error {
+	return nil
+}
+
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/manypackages04/item.Item)
 func (x *Item) UnmarshalJSON(b []byte) error {
 	type internal struct {
@@ -20,5 +25,5 @@ func (x *Item) UnmarshalJSON(b []byte) error {
 		return errors.New("Name is required")
 	}
 	x.Name = *p.Name
-	return nil
+	return x.FormatCheck()
 }

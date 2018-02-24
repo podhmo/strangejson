@@ -1,46 +1,13 @@
-package codegen
+package unmarshaljsontask
 
 import (
 	"fmt"
 	"go/ast"
 	"go/types"
 	"io"
-	"sort"
 
-	"github.com/podhmo/astknife/bypos"
 	"github.com/podhmo/strangejson/output/codegen/accessor"
 )
-
-// GenerateUnmarshalJSON :
-func GenerateUnmarshalJSON(pkg *types.Package, sorted bypos.Sorted, arrived map[*types.Struct]types.Object) ([]Gen, error) {
-	a := &accessor.Accessor{Pkg: pkg}
-	var results []Gen
-
-	err := a.IterateStructs(func(sa *accessor.StructAccessor) error {
-		if !sa.Exported() {
-			return nil
-		}
-
-		sameOb, ok := arrived[sa.Underlying]
-		if !ok {
-			arrived[sa.Underlying] = sa.Object
-		}
-		results = append(results, Gen{
-			Name:   fmt.Sprintf("%s.UnmarshalJSON", sa.Name()),
-			Object: sa.Object,
-			File:   bypos.FindFile(sorted, sa.Object.Pos()),
-			Generate: func(w io.Writer, f *ast.File) error {
-				qf := NameTo(pkg, f)
-				return generateUnmarshalJSON(w, f, a, sa, qf, sameOb)
-			},
-		})
-		return nil
-	})
-
-	sort.Slice(results, func(i, j int) bool { return results[i].Name < results[j].Name })
-
-	return results, err
-}
 
 func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *accessor.StructAccessor, qf types.Qualifier, sameOb types.Object) error {
 	ob := sa.Object
@@ -96,25 +63,6 @@ func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *a
 		}
 		return nil
 	})
-	fmt.Fprintln(w, "	return nil")
+	fmt.Fprintln(w, "	return x.FormatCheck()")
 	return nil
-}
-
-// NameTo :
-func NameTo(pkg *types.Package, f *ast.File) types.Qualifier {
-	return func(other *types.Package) string {
-		if pkg == other {
-			return "" // same package; unqualified
-		}
-		// todo: cache
-		for _, is := range f.Imports {
-			if is.Path.Value[1:len(is.Path.Value)-1] == other.Path() {
-				if is.Name != nil {
-					return is.Name.String()
-				}
-				return other.Name()
-			}
-		}
-		return other.Name() // todo: add import
-	}
 }

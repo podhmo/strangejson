@@ -6,6 +6,16 @@ import (
 	"time"
 )
 
+// FormatCheck : (generated from github.com/podhmo/strangejson/examples/depends01.User)
+func (x *User) FormatCheck() error {
+	for _, sub := range x.Skills {
+		if err := sub.FormatCheck(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/depends01.User)
 func (x *User) UnmarshalJSON(b []byte) error {
 	type internal struct {
@@ -44,5 +54,5 @@ func (x *User) UnmarshalJSON(b []byte) error {
 		return errors.New("skills is required")
 	}
 	x.Skills = *p.Skills
-	return nil
+	return x.FormatCheck()
 }

@@ -4,19 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/printer"
 	"go/types"
 	"io"
 	"log"
+	"sort"
 	"strings"
 
-	"github.com/podhmo/astknife/action"
 	"github.com/podhmo/astknife/bypos"
 	"github.com/podhmo/astknife/lookup"
 	"github.com/podhmo/strangejson/buildcontext"
 	"github.com/podhmo/strangejson/output"
-	"github.com/podhmo/strangejson/output/codegen/fileinfo"
+	"github.com/podhmo/strangejson/output/codegen/formatchecktask"
+	"github.com/podhmo/strangejson/output/codegen/unmarshaljsontask"
 	"golang.org/x/tools/go/loader"
 	"golang.org/x/tools/imports"
 )
@@ -31,25 +30,63 @@ func New(build *buildcontext.Context, program *loader.Program) output.Command {
 	return &command{Build: build, Program: program}
 }
 
+type target struct {
+	info   *loader.PackageInfo
+	sorted bypos.Sorted
+}
+
 // run :
 func (cmd *command) Run(pkgpaths []string) error {
-	cache := &cache{
-		unmarshalStructCache: map[*types.Struct]types.Object{},
+	formatcheckable, err := formatchecktask.NewFormatCheckable(cmd.Program)
+	if err != nil {
+		return err
 	}
 
+	unmarshalStructCache := map[*types.Struct]types.Object{}
+
+	var targets []target
 	for _, pkgpath := range pkgpaths {
 		info := cmd.Program.Package(pkgpath)
-		fset := cmd.Program.Fset
-		sorted := bypos.SortFiles(info.Files)
-		lookup := lookup.New(sorted.Files...)
+		targets = append(targets, target{
+			info:   info,
+			sorted: bypos.SortFiles(info.Files),
+		})
+	}
 
-		gens, err := GenerateUnmarshalJSON(info.Pkg, sorted, cache.unmarshalStructCache)
-		if err != nil {
-			return err
+	tasks := map[*loader.PackageInfo][]output.Task{}
+	for _, target := range targets {
+		{
+			t := unmarshaljsontask.New(unmarshalStructCache)
+			if err := t.Prepare(target.info.Pkg, target.sorted); err != nil {
+				return err
+			}
+			tasks[target.info] = append(tasks[target.info], t)
 		}
 
-		r := fileinfo.NewRepository(fset, info.Pkg, info.Files)
-		aggregated := map[*ast.File][]Gen{}
+		{
+			t := formatchecktask.New(formatcheckable)
+			if err := t.Prepare(target.info.Pkg, target.sorted); err != nil {
+				return err
+			}
+			tasks[target.info] = append(tasks[target.info], t)
+		}
+	}
+
+	for _, target := range targets {
+		fset := cmd.Program.Fset
+
+		var gens []output.Gen
+		for _, t := range tasks[target.info] {
+			newgens, err := t.Do(target.info.Pkg, target.sorted)
+			if err != nil {
+				return err
+			}
+			gens = append(gens, newgens...)
+		}
+
+		r := NewRepository(fset, target.info.Pkg, target.info.Files)
+
+		aggregated := map[*ast.File][]output.Gen{}
 		for _, gen := range gens {
 			log.Printf("for %s.%s\n", gen.Object.Type().String(), gen.Name)
 			srcfile := gen.File
@@ -65,12 +102,15 @@ func (cmd *command) Run(pkgpaths []string) error {
 			aggregated[dstfile] = append(aggregated[dstfile], gen)
 		}
 
+		lookup := lookup.New(target.sorted.Files...)
 		for f, gens := range aggregated {
 			filename, _ := r.NameOf(f)
 			log.Printf("write %s\n", filename)
 
 			var newCodeBuf bytes.Buffer
-			io.WriteString(&newCodeBuf, fmt.Sprintf("package %s\n", info.Pkg.Name()))
+			io.WriteString(&newCodeBuf, fmt.Sprintf("package %s\n", target.info.Pkg.Name()))
+
+			sort.Slice(gens, func(i, j int) bool { return gens[i].Name < gens[j].Name })
 			for _, gen := range gens {
 				if err := gen.Generate(&newCodeBuf, f); err != nil {
 					return err
@@ -79,46 +119,28 @@ func (cmd *command) Run(pkgpaths []string) error {
 
 			switch r.IsNew(f) {
 			case true:
-				output, err := imports.Process(filename, newCodeBuf.Bytes(), nil)
-				if err != nil {
+				if err := emitFile(cmd.Build, filename, newCodeBuf.Bytes()); err != nil {
 					return err
 				}
-				buildcontext.WriteFile(cmd.Build, filename, output, 0644)
 			default:
-				newf, err := parser.ParseFile(fset, filename, newCodeBuf.Bytes(), parser.ParseComments)
+				modifier := &Modifier{lookup: lookup, fset: fset, f: f}
+				code, err := modifier.modifyCode(filename, gens, newCodeBuf.Bytes())
 				if err != nil {
 					return err
 				}
-
-				for _, gen := range gens {
-					replacement := lookup.With(newf).Lookup(gen.Name) // xxx
-					if _, err := action.AppendOrReplace(lookup, f, replacement); err != nil {
-						if !action.IsNoEffect(err) {
-							return err
-						}
-					}
-				}
-
-				var b bytes.Buffer
-				if err := printer.Fprint(&b, fset, f); err != nil {
+				if err := emitFile(cmd.Build, filename, code); err != nil {
 					return err
 				}
-
-				output, err := imports.Process(filename, b.Bytes(), nil)
-				if err != nil {
-					return err
-				}
-				buildcontext.WriteFile(cmd.Build, filename, output, 0644)
 			}
 		}
 	}
 	return nil
 }
 
-// Gen :
-type Gen struct {
-	Name     string
-	Object   types.Object
-	File     *ast.File
-	Generate func(w io.Writer, f *ast.File) error // xxx tentative
+func emitFile(ctxt *buildcontext.Context, filename string, body []byte) error {
+	output, err := imports.Process(filename, body, nil)
+	if err != nil {
+		return err
+	}
+	return buildcontext.WriteFile(ctxt, filename, output, 0644)
 }

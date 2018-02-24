@@ -1,0 +1,3 @@
+gen:
+	go install -v ../../cmd/...
+	strangejson

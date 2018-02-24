@@ -10,6 +10,7 @@ gen:
 	strangejson --pkg github.com/podhmo/strangejson/examples/pointer02
 	strangejson --pkg github.com/podhmo/strangejson/examples/manytypes03
 	strangejson --pkg github.com/podhmo/strangejson/examples/manypackages04/*
+	strangejson --pkg github.com/podhmo/strangejson/examples/formatcheck05
 
 clean:
 	find examples -name "*_gen.go" | xargs rm -vf

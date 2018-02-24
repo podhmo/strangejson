@@ -5,6 +5,11 @@ import (
 	"errors"
 )
 
+// FormatCheck : (generated from github.com/podhmo/strangejson/examples/simple00.Skill)
+func (x *Skill) FormatCheck() error {
+	return nil
+}
+
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/simple00.Skill)
 func (x *Skill) UnmarshalJSON(b []byte) error {
 	type internal struct {
@@ -20,5 +25,5 @@ func (x *Skill) UnmarshalJSON(b []byte) error {
 		return errors.New("name is required")
 	}
 	x.Name = *p.Name
-	return nil
+	return x.FormatCheck()
 }

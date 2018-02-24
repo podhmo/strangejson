@@ -105,6 +105,17 @@ func TestItem(t *testing.T) {
 			}
 		})
 		t.Run("Item5", func(t *testing.T) {
+			candidates := []C{
+				{
+					input:     `{}`,
+					shouldErr: false,
+				},
+				{
+					input:     `{"name": "foo"}`,
+					shouldErr: false,
+				},
+			}
+
 			for _, c := range candidates {
 				c := c
 				t.Run(c.input, func(t *testing.T) {
