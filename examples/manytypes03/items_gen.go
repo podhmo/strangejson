@@ -2,7 +2,9 @@ package model
 
 import (
 	"encoding/json"
-	"errors"
+
+	multierror "github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 )
 
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item)
@@ -21,11 +23,13 @@ func (x *Item) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var merr *multierror.Error
 	if p.Name == nil {
-		return errors.New("Name is required")
+		merr = multierror.Append(merr, errors.New("Name is required"))
+	} else {
+		x.Name = *p.Name
 	}
-	x.Name = *p.Name
-	return x.FormatCheck()
+	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }
 
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item2)
@@ -54,11 +58,13 @@ func (x *Item4) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var merr *multierror.Error
 	if p.Name == nil {
-		return errors.New("Name is required")
+		merr = multierror.Append(merr, errors.New("Name is required"))
+	} else {
+		x.Name = *p.Name
 	}
-	x.Name = *p.Name
-	return x.FormatCheck()
+	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }
 
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item5)
@@ -77,8 +83,9 @@ func (x *Item5) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var merr *multierror.Error
 	if p.Name != nil {
 		x.Name = *p.Name
 	}
-	return x.FormatCheck()
+	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }

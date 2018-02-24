@@ -2,7 +2,9 @@ package item
 
 import (
 	"encoding/json"
-	"errors"
+
+	multierror "github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 )
 
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/manypackages04/item.Item)
@@ -21,9 +23,11 @@ func (x *Item) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var merr *multierror.Error
 	if p.Name == nil {
-		return errors.New("Name is required")
+		merr = multierror.Append(merr, errors.New("Name is required"))
+	} else {
+		x.Name = *p.Name
 	}
-	x.Name = *p.Name
-	return x.FormatCheck()
+	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }

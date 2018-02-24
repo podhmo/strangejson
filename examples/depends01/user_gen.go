@@ -2,18 +2,23 @@ package depends
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"time"
+
+	multierror "github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 )
 
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/depends01.User)
 func (x *User) FormatCheck() error {
-	for _, sub := range x.Skills {
+	var merr *multierror.Error
+
+	for i, sub := range x.Skills {
 		if err := sub.FormatCheck(); err != nil {
-			return err
+			merr = multierror.Append(merr, errors.WithMessage(err, fmt.Sprintf("Skills[%d]", i)))
 		}
 	}
-	return nil
+	return merr.ErrorOrNil()
 }
 
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/depends01.User)
@@ -32,14 +37,17 @@ func (x *User) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var merr *multierror.Error
 	if p.Name == nil {
-		return errors.New("name is required")
+		merr = multierror.Append(merr, errors.New("name is required"))
+	} else {
+		x.Name = *p.Name
 	}
-	x.Name = *p.Name
 	if p.Age == nil {
-		return errors.New("age is required")
+		merr = multierror.Append(merr, errors.New("age is required"))
+	} else {
+		x.Age = *p.Age
 	}
-	x.Age = *p.Age
 	if p.NickName != nil {
 		x.NickName = *p.NickName
 	}
@@ -47,12 +55,14 @@ func (x *User) UnmarshalJSON(b []byte) error {
 		x.Birth = *p.Birth
 	}
 	if p.BloodType == nil {
-		return errors.New("bloodtype is required")
+		merr = multierror.Append(merr, errors.New("bloodtype is required"))
+	} else {
+		x.BloodType = *p.BloodType
 	}
-	x.BloodType = *p.BloodType
 	if p.Skills == nil {
-		return errors.New("skills is required")
+		merr = multierror.Append(merr, errors.New("skills is required"))
+	} else {
+		x.Skills = *p.Skills
 	}
-	x.Skills = *p.Skills
-	return x.FormatCheck()
+	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }

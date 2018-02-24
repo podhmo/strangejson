@@ -4,6 +4,3 @@ gen:
 
 clean:
 	rm -fv *_gen.go
-
-test:
-	go test -v

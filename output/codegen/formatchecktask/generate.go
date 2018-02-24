@@ -1,6 +1,7 @@
 package formatchecktask
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/types"
@@ -17,10 +18,14 @@ func generateFormatCheck(w io.Writer, f *ast.File, a *accessor.Accessor, sa *acc
 	}
 
 	ob := sa.Object
-	o := writerutil.LeveledOutput{W: w}
+	var b bytes.Buffer
+	isEmpty := true
+	o := writerutil.LeveledOutput{W: &b}
 
 	o.Printf("// FormatCheck : (generated from %s)\n", ob.Type().String())
 	o.WithBlock(fmt.Sprintf("func (x %s) FormatCheck() error", types.TypeString(types.NewPointer(ob.Type()), qf)), func() {
+		o.Println("var merr *multierror.Error")
+		o.Newline()
 
 		// todo: use multierror
 		candidates := []formatcheck.Check{formatcheck.MaxLength, formatcheck.MinLength}
@@ -36,15 +41,17 @@ func generateFormatCheck(w io.Writer, f *ast.File, a *accessor.Accessor, sa *acc
 
 			if formatcheckable.IsFormatCheckable(fa.Object.Type()) {
 				o.WithBlock(fmt.Sprintf("if err := x.%s.FormatCheck(); err != nil", fa.Object.Name()), func() {
-					o.Println("	return err")
+					isEmpty = false
+					o.Printf("merr = multierror.Append(merr, errors.WithMessage(err, %q))\n", fa.Object.Name())
 				})
 			}
 			if t, ok := fa.Object.Type().Underlying().(hasElem); ok {
 				if formatcheckable.IsFormatCheckable(t.Elem()) {
 					if _, ok := t.(*types.Pointer); !ok {
-						o.WithBlock(fmt.Sprintf("for _, sub := range x.%s", fa.Object.Name()), func() {
+						o.WithBlock(fmt.Sprintf("for i, sub := range x.%s", fa.Object.Name()), func() {
 							o.WithBlock("if err := sub.FormatCheck(); err != nil", func() {
-								o.Println("return err")
+								isEmpty = false
+								o.Printf("merr = multierror.Append(merr, errors.WithMessage(err, fmt.Sprintf(\"%s[%%d]\", i)))\n", fa.Object.Name())
 							})
 						})
 					}
@@ -55,13 +62,27 @@ func generateFormatCheck(w io.Writer, f *ast.File, a *accessor.Accessor, sa *acc
 				if v, ok := fa.Tag.Lookup(c.Name); ok {
 					c := c // copied
 					c.Value = v
+					isEmpty = false
 					c.Callback(&o, "x", fa, c.Value)
 				}
 			}
 			return nil
 		})
 
-		o.Println("return nil")
+		o.Println("return merr.ErrorOrNil()")
 	})
+
+	if !isEmpty {
+		io.Copy(w, &b)
+		return nil
+	}
+
+	{
+		o := writerutil.LeveledOutput{W: w}
+		o.Printf("// FormatCheck : (generated from %s)\n", ob.Type().String())
+		o.WithBlock(fmt.Sprintf("func (x %s) FormatCheck() error", types.TypeString(types.NewPointer(ob.Type()), qf)), func() {
+			o.Println("return nil")
+		})
+	}
 	return nil
 }

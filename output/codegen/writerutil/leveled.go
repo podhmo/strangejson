@@ -34,6 +34,19 @@ func (lw *LeveledOutput) WithBlock(prefix string, callback func()) {
 	lw.Println("}")
 }
 
+// WithIfAndElse :
+func (lw *LeveledOutput) WithIfAndElse(prefix string, callback func(), callback2 func()) {
+	lw.Println("if " + prefix + " {")
+	lw.Indent()
+	callback()
+	lw.UnIndent()
+	lw.Println("} else {")
+	lw.Indent()
+	callback2()
+	lw.UnIndent()
+	lw.Println("}")
+}
+
 // Newline :
 func (lw *LeveledOutput) Newline() (int, error) {
 	return io.WriteString(lw.W, "\n")

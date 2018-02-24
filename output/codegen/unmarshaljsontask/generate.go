@@ -46,6 +46,8 @@ func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *a
 		})
 		o.Newline()
 
+		o.Println("var merr *multierror.Error")
+
 		// todo: use multierror
 		sa.IterateFields(func(fa *accessor.FieldAccessor) error {
 			if !fa.Exported() {
@@ -53,10 +55,11 @@ func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *a
 			}
 			switch fa.IsRequired() {
 			case true:
-				o.WithBlock(fmt.Sprintf("if p.%s == nil", fa.Name()), func() {
-					o.Printf("return errors.New(\"%s is required\")\n", fa.GuessJSONFieldName(fa.Name()))
+				o.WithIfAndElse(fmt.Sprintf("p.%s == nil", fa.Name()), func() {
+					o.Printf("merr = multierror.Append(merr, errors.New(\"%s is required\"))\n", fa.GuessJSONFieldName(fa.Name()))
+				}, func() {
+					o.Printf("x.%s = *p.%s\n", fa.Name(), fa.Name())
 				})
-				o.Printf("x.%s = *p.%s\n", fa.Name(), fa.Name())
 			case false:
 				o.WithBlock(fmt.Sprintf("if p.%s != nil", fa.Name()), func() {
 					o.Printf("x.%s = *p.%s\n", fa.Name(), fa.Name())
@@ -64,7 +67,7 @@ func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *a
 			}
 			return nil
 		})
-		o.Println("return x.FormatCheck()")
+		o.Println("return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()")
 	})
 	return nil
 }

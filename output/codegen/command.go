@@ -16,6 +16,7 @@ import (
 	"github.com/podhmo/strangejson/output"
 	"github.com/podhmo/strangejson/output/codegen/formatchecktask"
 	"github.com/podhmo/strangejson/output/codegen/unmarshaljsontask"
+	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/loader"
 	"golang.org/x/tools/imports"
 )
@@ -110,6 +111,11 @@ func (cmd *command) Run(pkgpaths []string) error {
 			var newCodeBuf bytes.Buffer
 			io.WriteString(&newCodeBuf, fmt.Sprintf("package %s\n", target.info.Pkg.Name()))
 
+			// xxx tentative
+			io.WriteString(&newCodeBuf, "import (\n")
+			io.WriteString(&newCodeBuf, "	\"github.com/pkg/errors\"")
+			io.WriteString(&newCodeBuf, ")\n")
+
 			sort.Slice(gens, func(i, j int) bool { return gens[i].Name < gens[j].Name })
 			for _, gen := range gens {
 				if err := gen.Generate(&newCodeBuf, f); err != nil {
@@ -123,6 +129,7 @@ func (cmd *command) Run(pkgpaths []string) error {
 					return err
 				}
 			default:
+				astutil.RewriteImport(fset, f, "errors", "github.com/pkg/errors")
 				modifier := &Modifier{lookup: lookup, fset: fset, f: f}
 				code, err := modifier.modifyCode(filename, gens, newCodeBuf.Bytes())
 				if err != nil {

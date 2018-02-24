@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	_ "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	_ "github.com/pkg/errors"
 	"github.com/podhmo/strangejson"
 	"github.com/podhmo/strangejson/buildcontext"
 	_ "github.com/podhmo/strangejson/formatcheck"

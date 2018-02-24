@@ -2,16 +2,21 @@ package model
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"time"
+
+	multierror "github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 )
 
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Item)
 func (x *Item) FormatCheck() error {
+	var merr *multierror.Error
+
 	if err := x.Product.FormatCheck(); err != nil {
-		return err
+		merr = multierror.Append(merr, errors.WithMessage(err, "Product"))
 	}
-	return nil
+	return merr.ErrorOrNil()
 }
 
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Item)
@@ -26,25 +31,32 @@ func (x *Item) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var merr *multierror.Error
 	if p.Product == nil {
-		return errors.New("product is required")
+		merr = multierror.Append(merr, errors.New("product is required"))
+	} else {
+		x.Product = *p.Product
 	}
-	x.Product = *p.Product
 	if p.Count == nil {
-		return errors.New("count is required")
+		merr = multierror.Append(merr, errors.New("count is required"))
+	} else {
+		x.Count = *p.Count
 	}
-	x.Count = *p.Count
-	return x.FormatCheck()
+	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }
 
+func
+
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Order)
-func (x *Order) FormatCheck() error {
-	for _, sub := range x.Items {
+(x *Order) FormatCheck() error {
+	var merr *multierror.Error
+
+	for i, sub := range x.Items {
 		if err := sub.FormatCheck(); err != nil {
-			return err
+			merr = multierror.Append(merr, errors.WithMessage(err, fmt.Sprintf("Items[%d]", i)))
 		}
 	}
-	return nil
+	return merr.ErrorOrNil()
 }
 
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Order)
@@ -59,30 +71,39 @@ func (x *Order) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var merr *multierror.Error
 	if p.OrderedAt == nil {
-		return errors.New("orderedAt is required")
+		merr = multierror.Append(merr, errors.New("orderedAt is required"))
+	} else {
+		x.OrderedAt = *p.OrderedAt
 	}
-	x.OrderedAt = *p.OrderedAt
 	if p.Items == nil {
-		return errors.New("items is required")
+		merr = multierror.Append(merr, errors.New("items is required"))
+	} else {
+		x.Items = *p.Items
 	}
-	x.Items = *p.Items
-	return x.FormatCheck()
+	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }
 
+func (x *
+
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Product)
-func (x *Product) FormatCheck() error {
+Product) FormatCheck() error {
+	var merr *multierror.Error
+
 	if len(x.Name) > 255 {
 		return errors.New("max")
 	}
 	if len(x.Name) < 1 {
 		return errors.New("min")
 	}
-	return nil
+	return merr.ErrorOrNil()
 }
 
+func (x *
+
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Product)
-func (x *Product) UnmarshalJSON(b []byte) error {
+Product) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Name  *string `json:"name" required:"true" minLength:"1" maxLength:"255"`
 		Price *int    `json:"price"`
@@ -93,13 +114,16 @@ func (x *Product) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var merr *multierror.Error
 	if p.Name == nil {
-		return errors.New("name is required")
+		merr = multierror.Append(merr, errors.New("name is required"))
+	} else {
+		x.Name = *p.Name
 	}
-	x.Name = *p.Name
 	if p.Price == nil {
-		return errors.New("price is required")
+		merr = multierror.Append(merr, errors.New("price is required"))
+	} else {
+		x.Price = *p.Price
 	}
-	x.Price = *p.Price
-	return x.FormatCheck()
+	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }
