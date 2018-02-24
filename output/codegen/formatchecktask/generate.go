@@ -51,7 +51,7 @@ func generateFormatCheck(w io.Writer, f *ast.File, a *accessor.Accessor, sa *acc
 						o.WithBlock(fmt.Sprintf("for i, sub := range x.%s", fa.Object.Name()), func() {
 							o.WithBlock("if err := sub.FormatCheck(); err != nil", func() {
 								isEmpty = false
-								o.Printf("merr = multierror.Append(merr, errors.WithMessage(err, fmt.Sprintf(\"%s[%%d]\", i)))\n", fa.Object.Name())
+								o.Printf("merr = multierror.Append(merr, errors.WithMessage(err, fmt.Sprintf(\"%s[%%v]\", i)))\n", fa.Object.Name())
 							})
 						})
 					}
