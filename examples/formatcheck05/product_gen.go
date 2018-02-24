@@ -45,15 +45,13 @@ func (x *Item) UnmarshalJSON(b []byte) error {
 	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }
 
-func
-
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Order)
-(x *Order) FormatCheck() error {
+func (x *Order) FormatCheck() error {
 	var merr *multierror.Error
 
 	for i, sub := range x.Items {
 		if err := sub.FormatCheck(); err != nil {
-			merr = multierror.Append(merr, errors.WithMessage(err, fmt.Sprintf("Items[%d]", i)))
+			merr = multierror.Append(merr, errors.WithMessage(err, fmt.Sprintf("Items[%v]", i)))
 		}
 	}
 	return merr.ErrorOrNil()
@@ -85,10 +83,8 @@ func (x *Order) UnmarshalJSON(b []byte) error {
 	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }
 
-func (x *
-
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Product)
-Product) FormatCheck() error {
+func (x *Product) FormatCheck() error {
 	var merr *multierror.Error
 
 	if len(x.Name) > 255 {
@@ -100,10 +96,8 @@ Product) FormatCheck() error {
 	return merr.ErrorOrNil()
 }
 
-func (x *
-
 // UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Product)
-Product) UnmarshalJSON(b []byte) error {
+func (x *Product) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Name  *string `json:"name" required:"true" minLength:"1" maxLength:"255"`
 		Price *int    `json:"price"`
@@ -124,6 +118,38 @@ Product) UnmarshalJSON(b []byte) error {
 		merr = multierror.Append(merr, errors.New("price is required"))
 	} else {
 		x.Price = *p.Price
+	}
+	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
+}
+
+// FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Setting)
+func (x *Setting) FormatCheck() error {
+	var merr *multierror.Error
+
+	for i, sub := range x.Products {
+		if err := sub.FormatCheck(); err != nil {
+			merr = multierror.Append(merr, errors.WithMessage(err, fmt.Sprintf("Products[%v]", i)))
+		}
+	}
+	return merr.ErrorOrNil()
+}
+
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Setting)
+func (x *Setting) UnmarshalJSON(b []byte) error {
+	type internal struct {
+		Products *map[string]*Product `json:"products"`
+	}
+
+	var p internal
+	if err := json.Unmarshal(b, &p); err != nil {
+		return err
+	}
+
+	var merr *multierror.Error
+	if p.Products == nil {
+		merr = multierror.Append(merr, errors.New("products is required"))
+	} else {
+		x.Products = *p.Products
 	}
 	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }

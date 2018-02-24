@@ -19,3 +19,8 @@ type Order struct {
 	OrderedAt time.Time `json:"orderedAt"`
 	Items     []Item    `json:"items"`
 }
+
+// Setting :
+type Setting struct {
+	Products map[string]*Product `json:"products"`
+}

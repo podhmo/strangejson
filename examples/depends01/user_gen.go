@@ -15,7 +15,7 @@ func (x *User) FormatCheck() error {
 
 	for i, sub := range x.Skills {
 		if err := sub.FormatCheck(); err != nil {
-			merr = multierror.Append(merr, errors.WithMessage(err, fmt.Sprintf("Skills[%d]", i)))
+			merr = multierror.Append(merr, errors.WithMessage(err, fmt.Sprintf("Skills[%v]", i)))
 		}
 	}
 	return merr.ErrorOrNil()
