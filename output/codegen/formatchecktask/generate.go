@@ -28,7 +28,12 @@ func generateFormatCheck(w io.Writer, f *ast.File, a *accessor.Accessor, sa *acc
 		o.Newline()
 
 		// todo: use multierror
-		candidates := []formatcheck.Check{formatcheck.MaxLength, formatcheck.MinLength}
+		candidates := []formatcheck.Check{
+			formatcheck.MaxLength,
+			formatcheck.MinLength,
+			formatcheck.Max,
+			formatcheck.Min,
+		}
 		sa.IterateFields(func(fa *accessor.FieldAccessor) error {
 			if _, ok := fa.Object.Type().(*types.Pointer); ok {
 				o.Printf("if x.%s != nil {\n", fa.Object.Name())

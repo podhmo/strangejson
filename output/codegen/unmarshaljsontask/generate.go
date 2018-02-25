@@ -67,7 +67,10 @@ func generateUnmarshalJSON(w io.Writer, f *ast.File, a *accessor.Accessor, sa *a
 			}
 			return nil
 		})
-		o.Println("return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()")
+        o.WithBlock("if merr != nil", func(){
+            o.Println("return merr.ErrorOrNil()")
+        })
+		o.Println("return x.FormatCheck()")
 	})
 	return nil
 }

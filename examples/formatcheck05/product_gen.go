@@ -42,7 +42,10 @@ func (x *Item) UnmarshalJSON(b []byte) error {
 	} else {
 		x.Count = *p.Count
 	}
-	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
+	if merr != nil {
+		return merr.ErrorOrNil()
+	}
+	return x.FormatCheck()
 }
 
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Order)
@@ -80,7 +83,10 @@ func (x *Order) UnmarshalJSON(b []byte) error {
 	} else {
 		x.Items = *p.Items
 	}
-	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
+	if merr != nil {
+		return merr.ErrorOrNil()
+	}
+	return x.FormatCheck()
 }
 
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Product)
@@ -88,10 +94,10 @@ func (x *Product) FormatCheck() error {
 	var merr *multierror.Error
 
 	if len(x.Name) > 255 {
-		return errors.New("max")
+		merr = multierror.Append(merr, errors.New("name maxLength"))
 	}
 	if len(x.Name) < 1 {
-		return errors.New("min")
+		merr = multierror.Append(merr, errors.New("name minLength"))
 	}
 	return merr.ErrorOrNil()
 }
@@ -119,7 +125,10 @@ func (x *Product) UnmarshalJSON(b []byte) error {
 	} else {
 		x.Price = *p.Price
 	}
-	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
+	if merr != nil {
+		return merr.ErrorOrNil()
+	}
+	return x.FormatCheck()
 }
 
 // FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Setting)
@@ -151,5 +160,8 @@ func (x *Setting) UnmarshalJSON(b []byte) error {
 	} else {
 		x.Products = *p.Products
 	}
-	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
+	if merr != nil {
+		return merr.ErrorOrNil()
+	}
+	return x.FormatCheck()
 }
