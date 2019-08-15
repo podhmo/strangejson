@@ -7,12 +7,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/simple00.User)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/simple00.User)
 func (x *User) FormatCheck() error {
 	return nil
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/simple00.User)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/simple00.User)
 func (x *User) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Name     *string `json:"name" required:"true"`

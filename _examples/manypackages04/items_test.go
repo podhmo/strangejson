@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/podhmo/strangejson/examples/manypackages04/item"
-	"github.com/podhmo/strangejson/examples/manypackages04/item2"
-	"github.com/podhmo/strangejson/examples/manypackages04/item3"
+	"github.com/podhmo/strangejson/_examples/manypackages04/item"
+	"github.com/podhmo/strangejson/_examples/manypackages04/item2"
+	"github.com/podhmo/strangejson/_examples/manypackages04/item3"
 )
 
 func TestItem(t *testing.T) {

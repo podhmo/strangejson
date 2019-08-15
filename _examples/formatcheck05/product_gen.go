@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Item)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/formatcheck05.Item)
 func (x *Item) FormatCheck() error {
 	var merr *multierror.Error
 
@@ -19,7 +19,7 @@ func (x *Item) FormatCheck() error {
 	return merr.ErrorOrNil()
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Item)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/formatcheck05.Item)
 func (x *Item) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Product *Product `json:"product"`
@@ -48,7 +48,7 @@ func (x *Item) UnmarshalJSON(b []byte) error {
 	return x.FormatCheck()
 }
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Order)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/formatcheck05.Order)
 func (x *Order) FormatCheck() error {
 	var merr *multierror.Error
 
@@ -60,7 +60,7 @@ func (x *Order) FormatCheck() error {
 	return merr.ErrorOrNil()
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Order)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/formatcheck05.Order)
 func (x *Order) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		OrderedAt *time.Time `json:"orderedAt"`
@@ -89,7 +89,7 @@ func (x *Order) UnmarshalJSON(b []byte) error {
 	return x.FormatCheck()
 }
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Product)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/formatcheck05.Product)
 func (x *Product) FormatCheck() error {
 	var merr *multierror.Error
 
@@ -102,7 +102,7 @@ func (x *Product) FormatCheck() error {
 	return merr.ErrorOrNil()
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Product)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/formatcheck05.Product)
 func (x *Product) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Name  *string `json:"name" required:"true" minLength:"1" maxLength:"255"`
@@ -131,7 +131,7 @@ func (x *Product) UnmarshalJSON(b []byte) error {
 	return x.FormatCheck()
 }
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Setting)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/formatcheck05.Setting)
 func (x *Setting) FormatCheck() error {
 	var merr *multierror.Error
 
@@ -143,7 +143,7 @@ func (x *Setting) FormatCheck() error {
 	return merr.ErrorOrNil()
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/formatcheck05.Setting)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/formatcheck05.Setting)
 func (x *Setting) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Products *map[string]*Product `json:"products"`

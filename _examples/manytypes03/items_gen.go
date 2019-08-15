@@ -7,12 +7,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/manytypes03.Item)
 func (x *Item) FormatCheck() error {
 	return nil
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/manytypes03.Item)
 func (x *Item) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Name *string
@@ -32,22 +32,22 @@ func (x *Item) UnmarshalJSON(b []byte) error {
 	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item2)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/manytypes03.Item2)
 func (x *Item2) FormatCheck() error {
 	return nil
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item2)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/manytypes03.Item2)
 func (x *Item2) UnmarshalJSON(b []byte) error {
 	return (*Item)(x).UnmarshalJSON(b)
 }
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item4)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/manytypes03.Item4)
 func (x *Item4) FormatCheck() error {
 	return nil
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item4)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/manytypes03.Item4)
 func (x *Item4) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Name *string
@@ -67,12 +67,12 @@ func (x *Item4) UnmarshalJSON(b []byte) error {
 	return multierror.Append(merr, x.FormatCheck()).ErrorOrNil()
 }
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item5)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/manytypes03.Item5)
 func (x *Item5) FormatCheck() error {
 	return nil
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/manytypes03.Item5)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/manytypes03.Item5)
 func (x *Item5) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Name *string `required:"false"`

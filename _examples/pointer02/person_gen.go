@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/pointer02.Person)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/pointer02.Person)
 func (x *Person) FormatCheck() error {
 	var merr *multierror.Error
 
@@ -24,7 +24,7 @@ func (x *Person) FormatCheck() error {
 	return merr.ErrorOrNil()
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/pointer02.Person)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/pointer02.Person)
 func (x *Person) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Name   *string  `json:"name"`

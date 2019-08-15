@@ -1,7 +1,7 @@
 package item3
 
 import (
-	"github.com/podhmo/strangejson/examples/manypackages04/item"
+	"github.com/podhmo/strangejson/_examples/manypackages04/item"
 )
 
 // Item3 : newtype

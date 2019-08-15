@@ -1,4 +1,4 @@
-package simple00
+package depends
 
 import (
 	"encoding/json"
@@ -7,12 +7,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FormatCheck : (generated from github.com/podhmo/strangejson/examples/simple00.Skill)
+// FormatCheck : (generated from github.com/podhmo/strangejson/_examples/depends01.Skill)
 func (x *Skill) FormatCheck() error {
 	return nil
 }
 
-// UnmarshalJSON : (generated from github.com/podhmo/strangejson/examples/simple00.Skill)
+// UnmarshalJSON : (generated from github.com/podhmo/strangejson/_examples/depends01.Skill)
 func (x *Skill) UnmarshalJSON(b []byte) error {
 	type internal struct {
 		Name *string `json:"name"`
